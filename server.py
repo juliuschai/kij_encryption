@@ -1,18 +1,17 @@
-from os import SEEK_CUR, wait
 import socket
 import logging
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP, Blowfish
 
-server_address = ('localhost',10000)
 BUFFER_SIZE = 64
 
 
 class connection:
     def __init__(self):
         self.key = b''
+        self.server_address = ('localhost',10001)
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.sock.bind((server_address))
+        self.sock.bind(self.server_address)
         self.sock.listen()
         self.Connect()
     
@@ -27,19 +26,20 @@ class connection:
     
     def Send(self,command,message):
         message = b"\r\n\r\n".join([command.encode('utf-8'),message])
-        print(message)
         return self.conn.sendall(message)
     
     def ReceiveData(self):
         with open('Output.zip','wb') as file:
             while True:
                 data = self.conn.recv(BUFFER_SIZE)
-                # self.Command(data)
-                if len(data) == 0:
-                    return self.Retrieve(self.conn)
-                if len(data) == 64:
+                if data == b'\r\n\r\n' or data == b'':
+                    file.close()
+                    break
+                elif len(data) >= 64:
                     data = self.Decypher(data)
                 file.write(data)
+            
+            self.sock.close()
     
     def Command(self):
         print("Sending RSA and Key.........")
@@ -49,7 +49,7 @@ class connection:
             j = data.split(" ")
             command = j[0].strip()
             if(command == "data"):
-                return self.ReceiveData(self.conn)
+                return self.ReceiveData()
             
     
     def KeyGenerator(self):
@@ -74,7 +74,7 @@ class connection:
     
     def Decypher(self,data):
         cipher = Blowfish.new(self.key,Blowfish.MODE_ECB)
-        return b"".join(cipher.decrypt(data))
+        return cipher.decrypt(data)
         
 if __name__ == '__main__':
     con = connection()
