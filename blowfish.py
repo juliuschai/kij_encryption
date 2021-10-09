@@ -274,17 +274,17 @@ S_BOXES = [
 ]
 
 
-MODULUS = int (2) ** 32
+MODULUS = int(2) ** 32
 
 
 def compute_with_key(key):
     key_len = len(key)
     index = 0
     for i in range(len(P_BOXES)):
-        val = ((key[index % key_len]) << 24) + \
-              ((key[(index + 1) % key_len]) << 16) + \
-              ((key[(index + 2) % key_len]) << 8) + \
-               (key[(index + 3) % key_len])
+        val = (ord(key[index % key_len]) << 24) + \
+              (ord(key[(index + 1) % key_len]) << 16) + \
+              (ord(key[(index + 2) % key_len]) << 8) + \
+              ord(key[(index + 3) % key_len])
         P_BOXES[i] = P_BOXES[i] ^ val
         index = index + 4
 
@@ -293,43 +293,69 @@ def compute_with_key(key):
 
     # Begin chain replacing the p-boxes
     for i in range(0, len(P_BOXES), 2):
-        l, r = cipher(l, r)
+        l, r = cipher(l, r,'encrypt')
         P_BOXES[i] = l
         P_BOXES[i + 1] = r
 
     # Chain replace the s-boxes
     for i in range(len(S_BOXES)):
         for j in range(0, len(S_BOXES[i]), 2):
-            l, r = cipher(l, r)
+            l, r = cipher(l, r,'encrypt')
             S_BOXES[i][j] = l
             S_BOXES[i][j + 1] = r
 
 
-def cipher(xl, xr):
-    for i in range(16):
-        xl = xl ^ P_BOXES[i] # binary or with P_BOX
+def cipher(xl, xr, direction):
+    if direction == 'encrypt':
+        for i in range(16):
+            xl = xl ^ P_BOXES[i] # binary or with P_BOX
 
-        # big endian
-        # divide to 8 bits
-        xl_div = [0] * 4
-        xl_div[0] = (xl & 0xFF000000) >> 24
-        xl_div[1] = (xl & 0x00FF0000) >> 16
-        xl_div[2] = (xl & 0x0000FF00) >> 8
-        xl_div[3] = xl & 0x000000FF
+            # big endian
+            # divide to 8 bits
+            xl_div = [0] * 4
+            xl_div[0] = (xl & 0xFF000000) >> 24
+            xl_div[1] = (xl & 0x00FF0000) >> 16
+            xl_div[2] = (xl & 0x0000FF00) >> 8
+            xl_div[3] = xl & 0x000000FF
 
-        # Perform all ops as longs then and out the last 32-bits to
-        # obtain the integer
-        f = (int(S_BOXES[0][xl_div[0]]) + int(S_BOXES[1][xl_div[1]])) % MODULUS # sum
-        f = f ^ int(S_BOXES[2][xl_div[2]]) # binary xor
-        f = ((f + int(S_BOXES[3][xl_div[3]])) % MODULUS) & 0xFFFFFFFF # sum
+            # Perform all ops as longs then and out the last 32-bits to
+            # obtain the integer
+            f = (int(S_BOXES[0][xl_div[0]]) + int(S_BOXES[1][xl_div[1]])) % MODULUS # sum
+            f = f ^ int(S_BOXES[2][xl_div[2]]) # binary xor
+            f = ((f + int(S_BOXES[3][xl_div[3]])) % MODULUS) & 0xFFFFFFFF # sum
 
-        xr = f ^ xr # binary or with right part
-        xl, xr = xr, xl # switch
+            xr = f ^ xr # binary or with right part
+            xl, xr = xr, xl # switch
+
+        xl, xr = xr, xl  # switch
+        xr = xr ^ P_BOXES[16]  # right part binary or with P_BOX 16
+        xl = xl ^ P_BOXES[17]  # left part binary or with P_BOX 17
+    elif direction == "decrypt":
+        for i in range(17,1,-1):
+            xl = xl ^ P_BOXES[i] # binary or with P_BOX
+
+            # big endian
+            # divide to 8 bits
+            xl_div = [0] * 4
+            xl_div[0] = (xl & 0xFF000000) >> 24
+            xl_div[1] = (xl & 0x00FF0000) >> 16
+            xl_div[2] = (xl & 0x0000FF00) >> 8
+            xl_div[3] = xl & 0x000000FF
+
+            # Perform all ops as longs then and out the last 32-bits to
+            # obtain the integer
+            f = (int(S_BOXES[0][xl_div[0]]) + int(S_BOXES[1][xl_div[1]])) % MODULUS  # sum
+            f = f ^ int(S_BOXES[2][xl_div[2]])  # binary xor
+            f = ((f + int(S_BOXES[3][xl_div[3]])) % MODULUS) & 0xFFFFFFFF  # sum
+
+            xr = f ^ xr  # binary or with right part
+            xl, xr = xr, xl  # switch
+
+        xl, xr = xr, xl  # switch
+        xr = xr ^ P_BOXES[1]  # right part binary or with P_BOX 1
+        xl = xl ^ P_BOXES[0]  # left part binary or with P_BOX 0
 
     # end of 16 iterations
-    xl, xr = xr, xl # switch
-    xr = xr ^ P_BOXES[16] # right part binary or with P_BOX 16
-    xl = xl ^ P_BOXES[17] # left part binary or with P_BOX 17
     return xl, xr
 
 def char_to_bin(char):
@@ -340,10 +366,10 @@ def encrypt(data):
         raise RuntimeError("Attempted to encrypt data of invalid block length: %s" % len(data))
 
     # big endian
-    xl = 0 | (char_to_bin(data[0]) << 24) | (char_to_bin(data[1]) << 16) | (char_to_bin(data[2]) << 8) | char_to_bin(data[3])
-    xr = 0 | (char_to_bin(data[4]) << 24) | (char_to_bin(data[5]) << 16) | (char_to_bin(data[6]) << 8) | char_to_bin(data[7])
+    xl = ord(data[3]) | (ord(data[2]) << 8) | (ord(data[1]) << 16) | (ord(data[0]) << 24)
+    xr = ord(data[7]) | (ord(data[6]) << 8) | (ord(data[5]) << 16) | (ord(data[4]) << 24)
 
-    cl, cr = cipher(xl, xr)
+    cl, cr = cipher(xl, xr,'encrypt')
 
     # big endian
     chars = ''.join([
@@ -352,75 +378,54 @@ def encrypt(data):
     ])
     return chars
 
+def decrypt(data):
+    if not len(data) == 8:
+        raise RuntimeError("Attemped to decrypt data of invalid block length: %s" %len(data))
+
+    #big endian
+    cl = ord(data[3]) | (ord(data[2]) << 8) | (ord(data[1]) << 16) | (ord(data[0]) << 24)
+    cr = ord(data[7]) | (ord(data[6]) << 8) | (ord(data[5]) << 16) | (ord(data[4]) << 24)
+
+    xl,xr = cipher(cl,cr,'decrypt')
+
+    chars = ''.join([
+        chr((xl >> 24) & 0xFF), chr((xl >> 16) & 0xFF), chr((xl >> 8) & 0xFF), chr(xl & 0xFF),
+        chr((xr >> 24) & 0xFF), chr((xr >> 16) & 0xFF), chr((xr >> 8) & 0xFF), chr(xr & 0xFF)
+    ])
+
+    return chars
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     print('PyCharm')
+    key = 'This is a test key'
+    compute_with_key(key)
+
+    print("Testing encryption:")
+    xl = 123456
+    xr = 654321
+    print("\tPlain text: (%s, %s)" % (xl, xr))
+    cl, cr = cipher(xl, xr, 'encrypt')
+    print("\tCrypted is: (%s, %s)" % (cl, cr))
+    dl, dr = cipher(cl, cr, 'decrypt')
+    print("\tUnencrypted is: (%s, %s)" % (dl, dr))
+
+    print("Testing buffer encrypt:")
     text = 'testtest'
-    # text = input("Text yang mau di encrypt")
     print("\tText: %s" % text)
     crypted = encrypt(text)
+    print("\tEncrypted: %s" % crypted)
+    decrypted = decrypt(crypted)
+    print("\tDecrypted: %s" % decrypted)
 
-    print("\tCrypted: %s" % crypted)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    with open('input.txt','r') as infile:
+        with open('output.txt','w') as outfile:
+            while True:
+                try:
+                    data = infile.read(8)
+                    crypted = encrypt(data)
+                    decrypted = decrypt(crypted)
+                    outfile.write(decrypted)
+                except RuntimeError:
+                    print('error')

@@ -1,6 +1,7 @@
 import socket
 from Crypto.PublicKey import RSA
-from Crypto.Cipher import Blowfish, PKCS1_OAEP
+from Crypto.Cipher import PKCS1_OAEP
+import blowfish
 
 class connection:
     def __init__(self):
@@ -8,6 +9,7 @@ class connection:
         self.PORT = 10001
         self.BUFFER_SIZE = 2048
         self.key = b''
+        self.blowfish = blowfish.blowfish()
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.Connect()
         
@@ -25,35 +27,35 @@ class connection:
     def SendFile(self):
         print("Sending File.........")
         self.Send('data')
-        with open('input.txt','rb') as infile:
+        with open('input.txt','r') as infile:
             while True:
                 chunk_data = infile.read(8)
-                if(len(chunk_data) == 0):
+                if len(chunk_data) == 0:
                     self.sock.send(b'\r\n\r\n')
                     print('Done')
                     infile.close()
                     break
                 elif len(chunk_data) == 8:
                     chunk_data = self.Encryptor(chunk_data)
-                self.sock.send(chunk_data)
+                self.sock.send(chunk_data.encode() + b'\r\n\r\n')
             self.sock.close()
     
-    def RSARetrivever(self,RSAvalue):
-        self.private_key =  RSA.import_key(RSAvalue)
-        self.private_key = PKCS1_OAEP.new(self.private_key)
+    def RSARetrivever(self, RSAvalue):
+        private_key = RSA.import_key(RSAvalue)
+        self.private_key = PKCS1_OAEP.new(private_key)
         return self.Command()
     
     def keyRetriever(self,key):
-        self.key = self.private_key.decrypt(key)
+        self.key = self.private_key.decrypt(key).decode()
+        self.blowfish.compute_with_key(self.key)
         return self.SendFile()
     
     def Encryptor(self,data):
-        Cipher = Blowfish.new(self.key,Blowfish.MODE_ECB)
-        return Cipher.encrypt(data)
+        return self.blowfish.encrypt(data)
     
     def Command(self):
         while True:
-            data =  self.sock.recv(self.BUFFER_SIZE)
+            data = self.sock.recv(self.BUFFER_SIZE)
             data = data.split(b'\r\n\r\n')
             command = data[0].decode()
             if(command == "RSA"):
