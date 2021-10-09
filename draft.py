@@ -419,66 +419,13 @@ if __name__ == '__main__':
     decrypted = decrypt(crypted)
     print("\tDecrypted: %s" % decrypted)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    with open('input.txt','r') as infile:
+        with open('output.txt','w') as outfile:
+            while True:
+                try:
+                    data = infile.read(8)
+                    crypted = encrypt(data)
+                    decrypted = decrypt(crypted)
+                    outfile.write(decrypted)
+                except RuntimeError:
+                    print('error')
