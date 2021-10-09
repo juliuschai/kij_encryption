@@ -356,11 +356,11 @@ class Blowfish:
 		# key with the p-boxes
 		key_len = len (key)
 		index = 0
-		for i in range (len (self.p_boxes)):
-			val = ((key[index % key_len]) << 24) + \
-			      ((key[(index + 1) % key_len]) << 16) + \
-			      ((key[(index + 2) % key_len]) << 8) + \
-			       (key[(index + 3) % key_len])
+		for i in range(len(self.p_boxes)):
+			val = (ord(key[index % key_len]) << 24) + \
+				  (ord(key[(index + 1) % key_len]) << 16) + \
+				  (ord(key[(index + 2) % key_len]) << 8) + \
+				  ord(key[(index + 3) % key_len])
 			self.p_boxes[i] = self.p_boxes[i] ^ val
 			index = index + 4
 
@@ -431,19 +431,19 @@ class Blowfish:
 		])
 		return chars
 
-	def decrypt (self, data):
+	def decrypt(self, data):
 
-		if not len (data) == 8:
-			raise RuntimeError("Attempted to encrypt data of invalid block length: %s" %len (data))
+		if not len(data) == 8:
+			raise RuntimeError("Attempted to encrypt data of invalid block length: %s" % len(data))
 
 		# Use big endianess since that's what everyone else uses
-		cl = (data[3]) | ((data[2]) << 8) | ((data[1]) << 16) | ((data[0]) << 24)
-		cr = (data[7]) | ((data[6]) << 8) | ((data[5]) << 16) | ((data[4]) << 24)
+		cl = ord(data[3]) | (ord(data[2]) << 8) | (ord(data[1]) << 16) | (ord(data[0]) << 24)
+		cr = ord(data[7]) | (ord(data[6]) << 8) | (ord(data[5]) << 16) | (ord(data[4]) << 24)
 
-		xl, xr = self.cipher (cl, cr, self.DECRYPT)
-		chars = bytes ([
-			((xl >> 24) & 0xFF), ((xl >> 16) & 0xFF), ((xl >> 8) & 0xFF), (xl & 0xFF),
-			((xr >> 24) & 0xFF), ((xr >> 16) & 0xFF), ((xr >> 8) & 0xFF), (xr & 0xFF)
+		xl, xr = self.cipher(cl, cr, self.DECRYPT)
+		chars = ''.join([
+			chr((xl >> 24) & 0xFF), chr((xl >> 16) & 0xFF), chr((xl >> 8) & 0xFF), chr(xl & 0xFF),
+			chr((xr >> 24) & 0xFF), chr((xr >> 16) & 0xFF), chr((xr >> 8) & 0xFF), chr(xr & 0xFF)
 		])
 		return chars
 
@@ -461,7 +461,7 @@ class Blowfish:
 
 if __name__ == '__main__':
 	key = 'This is a test key'
-	cipher = Blowfish (key)
+	cipher = Blowfish(key)
 
 	print("Testing encryption:")
 	xl = 123456
