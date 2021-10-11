@@ -400,35 +400,35 @@ class blowfish:
 
 
 # Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print('PyCharm')
-    key = 'This is a test key'
-    compute_with_key(key)
-
-    print("Testing encryption:")
-    xl = 123456
-    xr = 654321
-    print("\tPlain text: (%s, %s)" % (xl, xr))
-    cl, cr = self.cipher(xl, xr, 'encrypt')
-    print("\tCrypted is: (%s, %s)" % (cl, cr))
-    dl, dr = self.cipher(cl, cr, 'decrypt')
-    print("\tUnencrypted is: (%s, %s)" % (dl, dr))
-
-    print("Testing buffer encrypt:")
-    text = 'testtest'
-    print("\tText: %s" % text)
-    crypted = encrypt(text)
-    print("\tEncrypted: %s" % crypted)
-    decrypted = decrypt(crypted)
-    print("\tDecrypted: %s" % decrypted)
-
-    with open('input.txt', 'r') as infile:
-        with open('output.txt', 'w') as outfile:
-            while True:
-                try:
-                    data = infile.read(8)
-                    crypted = encrypt(data)
-                    decrypted = decrypt(crypted)
-                    outfile.write(decrypted)
-                except RuntimeError:
-                    print('error')
+# if __name__ == '__main__':
+#     print('PyCharm')
+#     key = 'This is a test key'
+#     compute_with_key(key)
+#
+#     print("Testing encryption:")
+#     xl = 123456
+#     xr = 654321
+#     print("\tPlain text: (%s, %s)" % (xl, xr))
+#     cl, cr = self.cipher(xl, xr, 'encrypt')
+#     print("\tCrypted is: (%s, %s)" % (cl, cr))
+#     dl, dr = self.cipher(cl, cr, 'decrypt')
+#     print("\tUnencrypted is: (%s, %s)" % (dl, dr))
+#
+#     print("Testing buffer encrypt:")
+#     text = 'testtest'
+#     print("\tText: %s" % text)
+#     crypted = encrypt(text)
+#     print("\tEncrypted: %s" % crypted)
+#     decrypted = decrypt(crypted)
+#     print("\tDecrypted: %s" % decrypted)
+#
+#     with open('input.txt', 'r') as infile:
+#         with open('output.txt', 'w') as outfile:
+#             while True:
+#                 try:
+#                     data = infile.read(8)
+#                     crypted = encrypt(data)
+#                     decrypted = decrypt(crypted)
+#                     outfile.write(decrypted)
+#                 except RuntimeError:
+#                     print('error')

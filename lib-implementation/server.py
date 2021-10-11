@@ -1,5 +1,7 @@
 import socket
 import logging
+import time
+
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP, Blowfish
 
@@ -9,6 +11,7 @@ BUFFER_SIZE = 64
 class connection:
     def __init__(self):
         self.key = b''
+        self.time = time.time()
         self.server_address = ('localhost',10001)
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.sock.bind(self.server_address)
@@ -19,7 +22,7 @@ class connection:
         while True:
             self.conn, self.addr  = self.sock.accept()
             with self.conn:
-                logging.warning('Connected :',self.addr)
+                logging.warning(f'Connected : {self.addr}')
                 self.Command()
                 self.sock.close()
                 return
@@ -41,6 +44,7 @@ class connection:
                 file.write(data)
             
             self.sock.close()
+            logging.warning(f'Time taken = {time.time() - self.time} Seconds')
     
     def Command(self):
         print("Sending RSA and Key.........")
